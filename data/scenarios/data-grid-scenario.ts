@@ -1,0 +1,68 @@
+export const dataGridScenario = {
+  tool: "renderComponent",
+  payload: {
+    componentType: "datagrid",
+    props: {
+      title: "Employee Directory",
+      description: "Sortable and paginated employee list",
+      columns: [
+        { key: "id", label: "ID", sortable: true },
+        { key: "name", label: "Name", sortable: true },
+        { key: "department", label: "Department", sortable: true },
+        { key: "position", label: "Position", sortable: true },
+        { key: "startDate", label: "Start Date", sortable: true },
+      ],
+      rows: [
+        { id: 1, name: "John Doe", department: "Engineering", position: "Senior Developer", startDate: "2020-01-15" },
+        { id: 2, name: "Jane Smith", department: "Marketing", position: "Marketing Manager", startDate: "2019-05-20" },
+        { id: 3, name: "Robert Johnson", department: "HR", position: "HR Specialist", startDate: "2021-03-10" },
+        {
+          id: 4,
+          name: "Emily Davis",
+          department: "Engineering",
+          position: "Frontend Developer",
+          startDate: "2022-02-01",
+        },
+        {
+          id: 5,
+          name: "Michael Wilson",
+          department: "Sales",
+          position: "Sales Representative",
+          startDate: "2020-11-15",
+        },
+        { id: 6, name: "Sarah Brown", department: "Engineering", position: "QA Engineer", startDate: "2021-07-22" },
+        { id: 7, name: "David Miller", department: "Finance", position: "Financial Analyst", startDate: "2019-09-05" },
+        { id: 8, name: "Jennifer Taylor", department: "Product", position: "Product Manager", startDate: "2020-04-18" },
+        {
+          id: 9,
+          name: "Thomas Anderson",
+          department: "Engineering",
+          position: "DevOps Engineer",
+          startDate: "2021-01-30",
+        },
+        {
+          id: 10,
+          name: "Lisa Martinez",
+          department: "Customer Support",
+          position: "Support Specialist",
+          startDate: "2022-03-15",
+        },
+        {
+          id: 11,
+          name: "James Wilson",
+          department: "Engineering",
+          position: "Backend Developer",
+          startDate: "2020-08-12",
+        },
+        {
+          id: 12,
+          name: "Patricia Moore",
+          department: "Marketing",
+          position: "Content Strategist",
+          startDate: "2021-05-04",
+        },
+      ],
+      pageSize: 5,
+    },
+  },
+}
