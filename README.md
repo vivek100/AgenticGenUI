@@ -70,6 +70,7 @@ Create a `.env.local` file in the root:
 ```env
 XAI_API_KEY=your_xai_api_key_here
 ```
+Note: You can run the demo app without api keys too, it has mock mode where it can use fuzzy match of input text message and render the components.
 
 > Get your API key from [Grok](https://grok.x.ai/)
 
@@ -346,7 +347,7 @@ AgenticGenUI is licensed under the **MIT License**. See [LICENSE](LICENSE) for f
 * [shadcn/ui](https://ui.shadcn.com/) – Component library
 * [Tailwind CSS](https://tailwindcss.com/) – Styling framework
 * [Next.js](https://nextjs.org/) – Fullstack framework
-* And all contributors ❤️
+* And all the future contributors ❤️
 
 ---
 
