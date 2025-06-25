@@ -2,7 +2,7 @@
 
 ![AgenticGenUI Banner](https://github.com/user-attachments/assets/48f6e5c3-b903-4f23-b76f-2d735c48fc80)
 
-**AgenticGenUI** is an open-source library for building AI-powered, generative user interfaces. It provides a comprehensive set of components tailored for AI agent applications, enabling developers to rapidly create interactive, production-ready UIs that seamlessly integrate with large language models.
+**AgenticGenUI** is an open-source library for building AI-powered, generative user interfaces. It provides a comprehensive set of components tailored for AI agent applications, enabling developers to rapidly create interactive, production-ready UIs that seamlessly integrate with large language models or any react based apps.
 
 ## LIVE DEMO : https://v0-open-source-library-creation.vercel.app/
 
