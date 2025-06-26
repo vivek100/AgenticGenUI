@@ -1,7 +1,9 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export interface OrgNode {
@@ -20,12 +22,68 @@ export interface OrgChartViewerProps {
 }
 
 /**
- * OrgChartViewer - Visual org chart tree view
+ * OrgChartViewer - Visual org chart tree view with pan and zoom
  *
- * Component for displaying organizational hierarchies
+ * Component for displaying organizational hierarchies with interactive navigation
  */
 export function OrgChartViewer({ title, description, nodes = [], className }: OrgChartViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  
+  // Pan and zoom state
+  const [zoom, setZoom] = useState(1)
+  const [panX, setPanX] = useState(0)
+  const [panY, setPanY] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 })
+
+  // Zoom constants
+  const MIN_ZOOM = 0.1
+  const MAX_ZOOM = 3
+  const ZOOM_STEP = 0.1
+
+  // Zoom and pan control functions
+  const handleZoomIn = useCallback(() => {
+    setZoom(prev => Math.min(prev + ZOOM_STEP, MAX_ZOOM))
+  }, [])
+
+  const handleZoomOut = useCallback(() => {
+    setZoom(prev => Math.max(prev - ZOOM_STEP, MIN_ZOOM))
+  }, [])
+
+  const handleReset = useCallback(() => {
+    setZoom(1)
+    setPanX(0)
+    setPanY(0)
+  }, [])
+
+  // Mouse event handlers for pan functionality
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    setIsDragging(true)
+    setLastMousePos({ x: e.clientX, y: e.clientY })
+  }, [])
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging) return
+    
+    const deltaX = e.clientX - lastMousePos.x
+    const deltaY = e.clientY - lastMousePos.y
+    
+    setPanX(prev => prev + deltaX)
+    setPanY(prev => prev + deltaY)
+    setLastMousePos({ x: e.clientX, y: e.clientY })
+  }, [isDragging, lastMousePos])
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false)
+  }, [])
+
+  // Wheel event handler for zoom
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault()
+    const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP
+    setZoom(prev => Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, prev + delta)))
+  }, [])
 
   // Build tree structure from flat nodes
   const buildTree = (nodes: OrgNode[]) => {
@@ -68,6 +126,11 @@ export function OrgChartViewer({ title, description, nodes = [], className }: Or
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+    // Apply transformations for zoom and pan
+    ctx.save()
+    ctx.translate(panX, panY)
+    ctx.scale(zoom, zoom)
 
     // Build tree
     const rootNodes = buildTree(nodes)
@@ -229,24 +292,81 @@ export function OrgChartViewer({ title, description, nodes = [], className }: Or
 
       startX += rootPos.width + horizontalSpacing
     })
-  }, [nodes])
+
+    // Restore canvas state
+    ctx.restore()
+  }, [nodes, zoom, panX, panY])
 
   return (
     <Card className={cn("overflow-hidden", className)}>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <div>
+          <CardTitle>{title}</CardTitle>
+          {description && <CardDescription>{description}</CardDescription>}
+        </div>
+        {nodes && nodes.length > 0 && (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleZoomOut}
+              disabled={zoom <= MIN_ZOOM}
+              aria-label="Zoom out"
+            >
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <span className="text-sm text-muted-foreground min-w-[3rem] text-center">
+              {Math.round(zoom * 100)}%
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleZoomIn}
+              disabled={zoom >= MAX_ZOOM}
+              aria-label="Zoom in"
+            >
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleReset}
+              aria-label="Reset view"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </CardHeader>
       <CardContent>
-        <div className="w-full overflow-auto">
+        <div 
+          ref={containerRef}
+          className="relative w-full h-[500px] overflow-hidden border rounded-md"
+        >
           {!nodes || nodes.length === 0 ? (
-            <div className="flex h-[400px] w-full items-center justify-center text-muted-foreground">
+            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
               No organization data available
             </div>
           ) : (
-            <canvas ref={canvasRef} className="min-h-[400px] w-full" style={{ minWidth: nodes.length * 200 }} />
+            <canvas 
+              ref={canvasRef} 
+              className="w-full h-full cursor-grab active:cursor-grabbing"
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              onWheel={handleWheel}
+              style={{ 
+                cursor: isDragging ? 'grabbing' : 'grab'
+              }}
+            />
           )}
         </div>
+        {nodes && nodes.length > 0 && (
+          <div className="mt-2 text-xs text-muted-foreground text-center">
+            Use mouse wheel to zoom, drag to pan
+          </div>
+        )}
       </CardContent>
     </Card>
   )
