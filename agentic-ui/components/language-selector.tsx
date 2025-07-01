@@ -7,7 +7,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { useAgentActions } from "../hooks/use-agent-actions"
-import { Check, ChevronsUpDown, Globe } from "lucide-react"
+import { Check, ChevronsUpDown, Globe, X } from "lucide-react"
 
 export interface Language {
   code: string
@@ -26,19 +26,35 @@ export interface LanguageSelectorProps {
 /**
  * LanguageSelector - Dropdown language selection
  *
- * Component for selecting a language from a list
+ * Component for selecting multiple languages from a list
  */
 export function LanguageSelector({ title, description, languages, current, className }: LanguageSelectorProps) {
   const { callTool } = useAgentActions()
   const [open, setOpen] = useState(false)
-  const [value, setValue] = useState(current)
-
-  const currentLanguage = languages.find((lang) => lang.code === value)
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([current])
 
   const handleSelect = (code: string) => {
-    setValue(code)
-    setOpen(false)
+    setSelectedLanguages((prev) => {
+      // If already selected, remove it
+      if (prev.includes(code)) {
+        return prev.filter((c) => c !== code)
+      }
+      // Otherwise add it
+      return [...prev, code]
+    })
+    
     callTool("changeLanguage", { languageCode: code })
+  }
+
+  const handleRemove = (code: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setSelectedLanguages((prev) => prev.filter((c) => c !== code))
+    
+    // If we're removing the current language, select the first remaining one
+    if (selectedLanguages.length > 1) {
+      const newCurrent = selectedLanguages.filter(c => c !== code)[0]
+      callTool("changeLanguage", { languageCode: newCurrent })
+    }
   }
 
   return (
@@ -52,9 +68,12 @@ export function LanguageSelector({ title, description, languages, current, class
           <PopoverTrigger asChild>
             <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between">
               <div className="flex items-center gap-2">
-                {currentLanguage?.flag && <span>{currentLanguage.flag}</span>}
                 <Globe className="h-4 w-4 text-muted-foreground" />
-                <span>{currentLanguage?.name || "Select language..."}</span>
+                <span>
+                  {selectedLanguages.length > 0
+                    ? `${selectedLanguages.length} language${selectedLanguages.length > 1 ? 's' : ''} selected`
+                    : "Select languages..."}
+                </span>
               </div>
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
@@ -66,12 +85,17 @@ export function LanguageSelector({ title, description, languages, current, class
                 <CommandEmpty>No language found.</CommandEmpty>
                 <CommandGroup className="max-h-[300px] overflow-auto">
                   {languages.map((language) => (
-                    <CommandItem key={language.code} value={language.code} onSelect={handleSelect}>
+                    <CommandItem key={language.code} value={language.code} onSelect={() => handleSelect(language.code)}>
                       <div className="flex items-center gap-2">
                         {language.flag && <span>{language.flag}</span>}
                         <span>{language.name}</span>
                       </div>
-                      <Check className={cn("ml-auto h-4 w-4", value === language.code ? "opacity-100" : "opacity-0")} />
+                      <Check 
+                        className={cn(
+                          "ml-auto h-4 w-4", 
+                          selectedLanguages.includes(language.code) ? "opacity-100" : "opacity-0"
+                        )} 
+                      />
                     </CommandItem>
                   ))}
                 </CommandGroup>
@@ -84,19 +108,33 @@ export function LanguageSelector({ title, description, languages, current, class
           {languages.slice(0, 5).map((language) => (
             <Button
               key={language.code}
-              variant={value === language.code ? "default" : "outline"}
+              variant={selectedLanguages.includes(language.code) ? "default" : "outline"}
               size="sm"
               onClick={() => handleSelect(language.code)}
-              className="flex items-center gap-1"
+              className="flex items-center gap-1 pr-2"
             >
               {language.flag && <span>{language.flag}</span>}
               <span>{language.name}</span>
+              {selectedLanguages.includes(language.code) && (
+                <X 
+                  className="ml-1 h-3 w-3 cursor-pointer" 
+                  onClick={(e) => handleRemove(language.code, e)}
+                />
+              )}
             </Button>
           ))}
         </div>
 
         <div className="pt-2 text-sm text-muted-foreground">
-          Current language: <span className="font-medium">{currentLanguage?.name || current}</span>
+          Selected languages: 
+          <span className="font-medium">
+            {selectedLanguages.length > 0 
+              ? languages
+                  .filter(lang => selectedLanguages.includes(lang.code))
+                  .map(lang => lang.name)
+                  .join(", ")
+              : "None"}
+          </span>
         </div>
       </CardContent>
     </Card>
