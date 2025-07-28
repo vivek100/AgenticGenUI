@@ -47,6 +47,10 @@ function ChatWithPanelContent({ initialMessages = [], className }: ChatWithPanel
     
     // Simulate AI response (in a real app, this would call your API)
     setTimeout(() => {
+      // Debug logs
+      console.log('Current panel state:', state);
+      console.log('Processing message:', input);
+      
       // For demo purposes, check if the message contains panel-related keywords
       const lowerInput = input.toLowerCase();
       
@@ -54,6 +58,7 @@ function ChatWithPanelContent({ initialMessages = [], className }: ChatWithPanel
       if (lowerInput.includes('panel') || 
           lowerInput.includes('tab') || 
           lowerInput.includes('zone') || 
+          lowerInput.includes('component') ||
           lowerInput.includes('create') || 
           lowerInput.includes('add') || 
           lowerInput.includes('dashboard')) {
@@ -96,7 +101,8 @@ function ChatWithPanelContent({ initialMessages = [], className }: ChatWithPanel
     // CREATE TAB: Create a new tab
     if ((lowerInput.includes('create') || lowerInput.includes('add')) && 
         (lowerInput.includes('tab') || lowerInput.includes('dashboard') || 
-         lowerInput.includes('analytics') || lowerInput.includes('reports'))) {
+         lowerInput.includes('analytics') || lowerInput.includes('reports')) &&
+        !lowerInput.includes('component') && !lowerInput.includes('zone')) {
       
       const tabId = `tab-${Date.now()}`;
       
@@ -271,7 +277,8 @@ This component was added to demonstrate the panel functionality.
     }
     
     // ADD COMPONENT: Add a component to a tab
-    else if (lowerInput.includes('add component') || lowerInput.includes('create component')) {
+    else if ((lowerInput.includes('add') || lowerInput.includes('create')) && 
+             lowerInput.includes('component') && !lowerInput.includes('zone')) {
       // Find the tab to add the component to
       let targetTabId = null;
       let targetTabName = '';
@@ -389,6 +396,7 @@ This is a new component added to the ${targetTabName} tab.`
           }
         };
         
+        console.log('Adding component with action:', componentAction);
         executeAction(componentAction);
         setMessages((prev) => [
           ...prev,
@@ -409,7 +417,8 @@ This is a new component added to the ${targetTabName} tab.`
     }
     
     // ADD ZONE: Add a new zone to a tab
-    else if (lowerInput.includes('add zone') || lowerInput.includes('create zone')) {
+    else if ((lowerInput.includes('add') || lowerInput.includes('create')) && 
+             lowerInput.includes('zone')) {
       // Find the tab to add the zone to
       let targetTabId = null;
       let targetTabName = '';
@@ -450,6 +459,7 @@ This is a new component added to the ${targetTabName} tab.`
           }
         };
         
+        console.log('Adding zone with action:', zoneAction);
         executeAction(zoneAction);
         
         // Add a demo component to the zone
