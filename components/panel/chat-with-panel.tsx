@@ -75,6 +75,7 @@ function ChatWithPanelContent({ initialMessages = [], className }: ChatWithPanel
   // Demo function to simulate panel actions based on user input
   const handlePanelActionDemo = (input: string) => {
     const lowerInput = input.toLowerCase();
+    const { state } = usePanelState();
     
     // Extract tab name if present
     let tabName = '';
@@ -85,13 +86,18 @@ function ChatWithPanelContent({ initialMessages = [], className }: ChatWithPanel
       }
     } else if (lowerInput.includes('dashboard')) {
       tabName = 'Dashboard';
+    } else if (lowerInput.includes('analytics')) {
+      tabName = 'Analytics';
+    } else if (lowerInput.includes('reports')) {
+      tabName = 'Reports';
     } else if (lowerInput.includes('create tab') || lowerInput.includes('add tab')) {
       tabName = `Tab ${Math.floor(Math.random() * 100)}`;
     }
     
-    // Create a demo tab
+    // CREATE TAB: Create a new tab
     if ((lowerInput.includes('create') || lowerInput.includes('add')) && 
-        (lowerInput.includes('tab') || lowerInput.includes('dashboard'))) {
+        (lowerInput.includes('tab') || lowerInput.includes('dashboard') || 
+         lowerInput.includes('analytics') || lowerInput.includes('reports'))) {
       
       const tabId = `tab-${Date.now()}`;
       
@@ -132,9 +138,9 @@ function ChatWithPanelContent({ initialMessages = [], className }: ChatWithPanel
               id: `component-${Date.now()}`,
               type: 'markdownrenderer',
               props: {
-                content: `# Demo Component
+                content: `# ${tabName} Tab
                 
-## This is a demo component in the panel
+## This is a demo component in the ${tabName} tab
 
 This component was added to demonstrate the panel functionality.
 
@@ -160,33 +166,451 @@ This component was added to demonstrate the panel functionality.
         }
       ]);
     }
-    // Switch tab
-    else if (lowerInput.includes('switch tab') || lowerInput.includes('change tab')) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          type: 'assistant',
-          content: "I would switch to another tab if one was specified and existed."
+    
+    // SWITCH TAB: Switch to a different tab
+    else if (lowerInput.includes('switch') || lowerInput.includes('change')) {
+      // Find the tab to switch to
+      let targetTabId = null;
+      let targetTabName = '';
+      
+      // Check if a specific tab name is mentioned
+      for (const tab of state.tabs) {
+        if (lowerInput.includes(tab.title.toLowerCase())) {
+          targetTabId = tab.id;
+          targetTabName = tab.title;
+          break;
         }
-      ]);
+      }
+      
+      // If no specific tab is found but there are tabs, switch to the first one
+      if (!targetTabId && state.tabs.length > 0) {
+        targetTabId = state.tabs[0].id;
+        targetTabName = state.tabs[0].title;
+      }
+      
+      if (targetTabId) {
+        const action: PanelActionType = {
+          action: 'switchTab',
+          tabId: targetTabId
+        };
+        
+        executeAction(action);
+        setMessages((prev) => [
+          ...prev,
+          {
+            type: 'assistant',
+            content: `I've switched to the "${targetTabName}" tab.`
+          }
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            type: 'assistant',
+            content: "I couldn't find any tabs to switch to. Please create a tab first."
+          }
+        ]);
+      }
     }
-    // Add component
+    
+    // REMOVE TAB: Delete a tab
+    else if ((lowerInput.includes('remove') || lowerInput.includes('delete')) && 
+             lowerInput.includes('tab')) {
+      // Find the tab to remove
+      let targetTabId = null;
+      let targetTabName = '';
+      
+      // Check if a specific tab name is mentioned
+      for (const tab of state.tabs) {
+        if (lowerInput.includes(tab.title.toLowerCase())) {
+          targetTabId = tab.id;
+          targetTabName = tab.title;
+          break;
+        }
+      }
+      
+      // If no specific tab is found but there are tabs, remove the active tab
+      if (!targetTabId && state.tabs.length > 0) {
+        if (state.activeTabId) {
+          const activeTab = state.tabs.find(tab => tab.id === state.activeTabId);
+          if (activeTab) {
+            targetTabId = activeTab.id;
+            targetTabName = activeTab.title;
+          }
+        }
+        
+        // If still no target, use the first tab
+        if (!targetTabId) {
+          targetTabId = state.tabs[0].id;
+          targetTabName = state.tabs[0].title;
+        }
+      }
+      
+      if (targetTabId) {
+        const action: PanelActionType = {
+          action: 'removeTab',
+          tabId: targetTabId
+        };
+        
+        executeAction(action);
+        setMessages((prev) => [
+          ...prev,
+          {
+            type: 'assistant',
+            content: `I've removed the "${targetTabName}" tab.`
+          }
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            type: 'assistant',
+            content: "I couldn't find any tabs to remove. Please create a tab first."
+          }
+        ]);
+      }
+    }
+    
+    // ADD COMPONENT: Add a component to a tab
     else if (lowerInput.includes('add component') || lowerInput.includes('create component')) {
+      // Find the tab to add the component to
+      let targetTabId = null;
+      let targetTabName = '';
+      let targetZoneId = null;
+      
+      // Check if a specific tab name is mentioned
+      for (const tab of state.tabs) {
+        if (lowerInput.includes(tab.title.toLowerCase())) {
+          targetTabId = tab.id;
+          targetTabName = tab.title;
+          
+          // Get the first zone in the tab
+          if (tab.zones.length > 0) {
+            targetZoneId = tab.zones[0].id;
+          }
+          break;
+        }
+      }
+      
+      // If no specific tab is found but there are tabs, use the active tab
+      if (!targetTabId && state.tabs.length > 0) {
+        if (state.activeTabId) {
+          const activeTab = state.tabs.find(tab => tab.id === state.activeTabId);
+          if (activeTab) {
+            targetTabId = activeTab.id;
+            targetTabName = activeTab.title;
+            
+            // Get the first zone in the tab
+            if (activeTab.zones.length > 0) {
+              targetZoneId = activeTab.zones[0].id;
+            }
+          }
+        }
+        
+        // If still no target, use the first tab
+        if (!targetTabId) {
+          const firstTab = state.tabs[0];
+          targetTabId = firstTab.id;
+          targetTabName = firstTab.title;
+          
+          // Get the first zone in the tab
+          if (firstTab.zones.length > 0) {
+            targetZoneId = firstTab.zones[0].id;
+          }
+        }
+      }
+      
+      // If we have a tab but no zone, create a zone
+      if (targetTabId && !targetZoneId) {
+        const zoneId = `zone-${Date.now()}`;
+        const zoneAction: PanelActionType = {
+          action: 'addZone',
+          tabId: targetTabId,
+          zone: {
+            id: zoneId,
+            components: []
+          }
+        };
+        
+        executeAction(zoneAction);
+        targetZoneId = zoneId;
+      }
+      
+      if (targetTabId && targetZoneId) {
+        // Determine component type based on input
+        let componentType = 'markdownrenderer';
+        let componentProps: any = {
+          content: `# New Component
+          
+This is a new component added to the ${targetTabName} tab.`
+        };
+        
+        // Check for specific component types in the input
+        if (lowerInput.includes('chart')) {
+          componentType = 'chart';
+          componentProps = {
+            title: 'Sample Chart',
+            type: 'bar',
+            data: {
+              labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+              datasets: [
+                {
+                  label: 'Sales',
+                  data: [65, 59, 80, 81, 56],
+                  backgroundColor: 'rgba(54, 162, 235, 0.5)'
+                }
+              ]
+            }
+          };
+        } else if (lowerInput.includes('table')) {
+          componentType = 'datatable';
+          componentProps = {
+            title: 'Sample Table',
+            data: [
+              { id: 1, name: 'John Doe', email: 'john@example.com' },
+              { id: 2, name: 'Jane Smith', email: 'jane@example.com' },
+              { id: 3, name: 'Bob Johnson', email: 'bob@example.com' }
+            ],
+            columns: [
+              { header: 'ID', accessorKey: 'id' },
+              { header: 'Name', accessorKey: 'name' },
+              { header: 'Email', accessorKey: 'email' }
+            ]
+          };
+        }
+        
+        const componentAction: PanelActionType = {
+          action: 'addComponent',
+          tabId: targetTabId,
+          zoneId: targetZoneId,
+          component: {
+            id: `component-${Date.now()}`,
+            type: componentType,
+            props: componentProps
+          }
+        };
+        
+        executeAction(componentAction);
+        setMessages((prev) => [
+          ...prev,
+          {
+            type: 'assistant',
+            content: `I've added a new ${componentType} component to the "${targetTabName}" tab.`
+          }
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            type: 'assistant',
+            content: "I couldn't find any tabs to add a component to. Please create a tab first."
+          }
+        ]);
+      }
+    }
+    
+    // ADD ZONE: Add a new zone to a tab
+    else if (lowerInput.includes('add zone') || lowerInput.includes('create zone')) {
+      // Find the tab to add the zone to
+      let targetTabId = null;
+      let targetTabName = '';
+      
+      // Check if a specific tab name is mentioned
+      for (const tab of state.tabs) {
+        if (lowerInput.includes(tab.title.toLowerCase())) {
+          targetTabId = tab.id;
+          targetTabName = tab.title;
+          break;
+        }
+      }
+      
+      // If no specific tab is found but there are tabs, use the active tab
+      if (!targetTabId && state.tabs.length > 0) {
+        if (state.activeTabId) {
+          const activeTab = state.tabs.find(tab => tab.id === state.activeTabId);
+          if (activeTab) {
+            targetTabId = activeTab.id;
+            targetTabName = activeTab.title;
+          }
+        }
+        
+        // If still no target, use the first tab
+        if (!targetTabId) {
+          targetTabId = state.tabs[0].id;
+          targetTabName = state.tabs[0].title;
+        }
+      }
+      
+      if (targetTabId) {
+        const zoneAction: PanelActionType = {
+          action: 'addZone',
+          tabId: targetTabId,
+          zone: {
+            id: `zone-${Date.now()}`,
+            components: []
+          }
+        };
+        
+        executeAction(zoneAction);
+        
+        // Add a demo component to the zone
+        setTimeout(() => {
+          const zoneId = zoneAction.zone.id;
+          const componentAction: PanelActionType = {
+            action: 'addComponent',
+            tabId: targetTabId!,
+            zoneId: zoneId,
+            component: {
+              id: `component-${Date.now()}`,
+              type: 'markdownrenderer',
+              props: {
+                content: `# New Zone
+                
+This is a new zone added to the ${targetTabName} tab.`
+              }
+            }
+          };
+          
+          executeAction(componentAction);
+        }, 500);
+        
+        setMessages((prev) => [
+          ...prev,
+          {
+            type: 'assistant',
+            content: `I've added a new zone to the "${targetTabName}" tab with a sample component.`
+          }
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            type: 'assistant',
+            content: "I couldn't find any tabs to add a zone to. Please create a tab first."
+          }
+        ]);
+      }
+    }
+    
+    // RENAME TAB: Rename a tab
+    else if (lowerInput.includes('rename') && lowerInput.includes('tab')) {
+      // Find the tab to rename
+      let targetTabId = null;
+      let oldTabName = '';
+      let newTabName = '';
+      
+      // Extract new name if present
+      if (lowerInput.includes('to')) {
+        const parts = input.split(/\s+to\s+/i);
+        if (parts.length > 1) {
+          newTabName = parts[1].trim().split(/\s+/)[0];
+        }
+      }
+      
+      if (!newTabName) {
+        newTabName = `Tab ${Math.floor(Math.random() * 100)}`;
+      }
+      
+      // Check if a specific tab name is mentioned
+      for (const tab of state.tabs) {
+        if (lowerInput.includes(tab.title.toLowerCase())) {
+          targetTabId = tab.id;
+          oldTabName = tab.title;
+          break;
+        }
+      }
+      
+      // If no specific tab is found but there are tabs, use the active tab
+      if (!targetTabId && state.tabs.length > 0) {
+        if (state.activeTabId) {
+          const activeTab = state.tabs.find(tab => tab.id === state.activeTabId);
+          if (activeTab) {
+            targetTabId = activeTab.id;
+            oldTabName = activeTab.title;
+          }
+        }
+        
+        // If still no target, use the first tab
+        if (!targetTabId) {
+          targetTabId = state.tabs[0].id;
+          oldTabName = state.tabs[0].title;
+        }
+      }
+      
+      if (targetTabId) {
+        const action: PanelActionType = {
+          action: 'renameTab',
+          tabId: targetTabId,
+          title: newTabName
+        };
+        
+        executeAction(action);
+        setMessages((prev) => [
+          ...prev,
+          {
+            type: 'assistant',
+            content: `I've renamed the "${oldTabName}" tab to "${newTabName}".`
+          }
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            type: 'assistant',
+            content: "I couldn't find any tabs to rename. Please create a tab first."
+          }
+        ]);
+      }
+    }
+    
+    // UNDO: Undo the last action
+    else if (lowerInput.includes('undo')) {
+      const action: PanelActionType = {
+        action: 'undo'
+      };
+      
+      executeAction(action);
       setMessages((prev) => [
         ...prev,
         {
           type: 'assistant',
-          content: "I would add a component to a specified tab and zone if they existed."
+          content: "I've undone the last panel action."
         }
       ]);
     }
+    
+    // REDO: Redo the last undone action
+    else if (lowerInput.includes('redo')) {
+      const action: PanelActionType = {
+        action: 'redo'
+      };
+      
+      executeAction(action);
+      setMessages((prev) => [
+        ...prev,
+        {
+          type: 'assistant',
+          content: "I've redone the last undone panel action."
+        }
+      ]);
+    }
+    
     // General panel info
     else {
       setMessages((prev) => [
         ...prev,
         {
           type: 'assistant',
-          content: "The panel with tabs and zones can be controlled by AI actions. Try asking me to 'create a tab named Dashboard' to see a demo."
+          content: `The panel with tabs and zones can be controlled by AI actions. Try these commands:
+          
+- "Create a tab named Dashboard"
+- "Add a component to the Dashboard tab"
+- "Add a zone to the Dashboard tab"
+- "Switch to the Dashboard tab"
+- "Rename the Dashboard tab to Analytics"
+- "Remove the Analytics tab"
+- "Undo the last action"
+- "Redo the last undone action"`
         }
       ]);
     }
