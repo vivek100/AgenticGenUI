@@ -28,7 +28,7 @@ function ChatWithPanelContent({ initialMessages = [], className }: ChatWithPanel
   const [input, setInput] = useState('');
   const [isPanelVisible, setIsPanelVisible] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { executeAction } = usePanelState();
+  const { state, executeAction } = usePanelState();
   
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -75,7 +75,6 @@ function ChatWithPanelContent({ initialMessages = [], className }: ChatWithPanel
   // Demo function to simulate panel actions based on user input
   const handlePanelActionDemo = (input: string) => {
     const lowerInput = input.toLowerCase();
-    const { state } = usePanelState();
     
     // Extract tab name if present
     let tabName = '';
