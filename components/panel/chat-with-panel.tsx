@@ -130,7 +130,7 @@ function ChatWithPanelContent({ initialMessages = [], className }: ChatWithPanel
             zoneId: zoneAction.zone.id,
             component: {
               id: `component-${Date.now()}`,
-              type: 'metricCard',
+              type: 'metriccard',
               props: {
                 title: 'Demo Metric',
                 value: '42',
