@@ -130,16 +130,18 @@ function ChatWithPanelContent({ initialMessages = [], className }: ChatWithPanel
             zoneId: zoneAction.zone.id,
             component: {
               id: `component-${Date.now()}`,
-              type: 'metriccard',
+              type: 'markdownrenderer',
               props: {
-                title: 'Demo Metric',
-                value: '42',
-                description: 'This is a demo component added to the panel',
-                trend: {
-                  value: 12.5,
-                  isPositive: true
-                },
-                icon: 'trending-up'
+                content: `# Demo Component
+                
+## This is a demo component in the panel
+
+This component was added to demonstrate the panel functionality.
+
+- The panel supports multiple tabs
+- Each tab can have multiple zones
+- Each zone can have multiple components
+- Components can be added, removed, and updated by AI actions`
               }
             }
           };

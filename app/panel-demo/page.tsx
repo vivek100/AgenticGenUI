@@ -1,12 +1,19 @@
 "use client"
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ChatWithPanel } from '@/components/panel/chat-with-panel';
+import { registerAllAgentComponents } from '@/agentic-ui/registry';
 
 /**
  * PanelDemoPage - Demo page for the AI-controlled panel with tabs and zones
  */
 export default function PanelDemoPage() {
+  // Register all components when the page loads
+  useEffect(() => {
+    registerAllAgentComponents();
+    console.log("Registered all agent components for panel demo");
+  }, []);
+
   return (
     <div className="flex flex-col h-screen">
       <header className="border-b p-4">
