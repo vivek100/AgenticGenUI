@@ -50,9 +50,15 @@ function ChatWithPanelContent({ initialMessages = [], className }: ChatWithPanel
       // For demo purposes, check if the message contains panel-related keywords
       const lowerInput = input.toLowerCase();
       
-      if (lowerInput.includes('panel') || lowerInput.includes('tab') || lowerInput.includes('zone')) {
+      // Check for panel-related keywords or specific commands
+      if (lowerInput.includes('panel') || 
+          lowerInput.includes('tab') || 
+          lowerInput.includes('zone') || 
+          lowerInput.includes('create') || 
+          lowerInput.includes('add') || 
+          lowerInput.includes('dashboard')) {
         // Simulate a panel action response
-        handlePanelActionDemo(lowerInput);
+        handlePanelActionDemo(input);
       } else {
         // Regular text response
         setMessages((prev) => [
@@ -70,12 +76,29 @@ function ChatWithPanelContent({ initialMessages = [], className }: ChatWithPanel
   const handlePanelActionDemo = (input: string) => {
     const lowerInput = input.toLowerCase();
     
+    // Extract tab name if present
+    let tabName = '';
+    if (lowerInput.includes('named')) {
+      const parts = input.split(/named\s+/i);
+      if (parts.length > 1) {
+        tabName = parts[1].trim().split(/\s+/)[0];
+      }
+    } else if (lowerInput.includes('dashboard')) {
+      tabName = 'Dashboard';
+    } else if (lowerInput.includes('create tab') || lowerInput.includes('add tab')) {
+      tabName = `Tab ${Math.floor(Math.random() * 100)}`;
+    }
+    
     // Create a demo tab
-    if (lowerInput.includes('create tab') || lowerInput.includes('add tab')) {
+    if ((lowerInput.includes('create') || lowerInput.includes('add')) && 
+        (lowerInput.includes('tab') || lowerInput.includes('dashboard'))) {
+      
       const tabId = `tab-${Date.now()}`;
-      const tabName = lowerInput.includes('named') 
-        ? input.split('named')[1].trim().split(' ')[0]
-        : `Tab ${Math.floor(Math.random() * 100)}`;
+      
+      // If no tab name was extracted, use a default
+      if (!tabName) {
+        tabName = `Tab ${Math.floor(Math.random() * 100)}`;
+      }
       
       const action: PanelActionType = {
         action: 'addTab',
