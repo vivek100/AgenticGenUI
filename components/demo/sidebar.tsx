@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search } from "lucide-react"
+import { Search, Github } from "lucide-react"
 import { componentDescriptions } from "@/data/component-descriptions"
 import { useState } from "react"
 import { ComponentDetailsModal } from "./component-details-modal"
@@ -57,6 +57,15 @@ export function Sidebar({
       <h2 className="text-lg font-bold mb-4">AgenticGenUI Demo</h2>
 
       <div className="space-y-4">
+        <Button
+          variant="outline"
+          className="w-full justify-center gap-2 font-medium"
+          onClick={() => window.open("https://github.com/vivek100/AgenticGenUI", "_blank")}
+        >
+          <Github className="h-4 w-4" />
+          View on GitHub
+        </Button>
+
         <div className="relative">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
